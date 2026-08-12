@@ -17,7 +17,8 @@ import {
     get,
     set,
     onValue,
-    runTransaction
+    runTransaction,
+    remove
 } from
     "https://www.gstatic.com/firebasejs/12.16.0/firebase-database.js";
 
@@ -453,6 +454,51 @@ async function createGameIfNeeded() {
 
 
 // =====================================================
+// START NEW GAME
+// =====================================================
+
+async function startNewGame() {
+
+    const gameRef =
+        ref(
+            db,
+            "fixedGame"
+        );
+
+    try {
+
+        // Delete previous game
+        await remove(gameRef);
+
+        console.log(
+            "Old game deleted."
+        );
+
+
+        // Create fresh game
+        await createGameIfNeeded();
+
+
+        alert(
+            "New game started successfully! 🎮"
+        );
+
+    } catch (error) {
+
+        console.error(
+            "NEW GAME ERROR:",
+            error
+        );
+
+        alert(
+            "Could not start new game:\n\n" +
+            error.message
+        );
+    }
+}
+
+
+// =====================================================
 // LISTEN TO GAME
 // =====================================================
 
@@ -558,6 +604,7 @@ function updateMyCard(game) {
             "Your card is visible.";
 
     }
+
 
     // -----------------------------------------
     // CARD CLOSED
