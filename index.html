@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Ramudu & Seetha</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <div class="container">
+
+        <h1>🏹 Ramudu & Seetha</h1>
+
+        <p class="subtitle">
+            5 Team Multiplayer Game
+        </p>
+
+
+        <!-- ================= HOME ================= -->
+
+        <section id="homeScreen">
+
+            <div class="box">
+
+                <h2>🎮 Enter Game</h2>
+
+                <p>
+                    Select your team and enter your team code.
+                </p>
+
+
+                <select id="teamSelect">
+
+                    <option value="">
+                        Select Your Team
+                    </option>
+
+                    <option value="Agni">
+                        🔥 Agni
+                    </option>
+
+                    <option value="Akash">
+                        ☁️ Akash
+                    </option>
+
+                    <option value="Vayu">
+                        💨 Vayu
+                    </option>
+
+                    <option value="Prudhvi">
+                        🌍 Prudhvi
+                    </option>
+
+                    <option value="Jal">
+                        💧 Jal
+                    </option>
+
+                </select>
+
+
+                <input type="text" id="roomCode" placeholder="Enter Team Code" maxlength="5">
+
+
+                <button id="enterBtn">
+                    🚀 Enter Game
+                </button>
+
+
+                <p id="loginMessage">
+                    Connecting to Firebase...
+                </p>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- ================= GAME ================= -->
+
+        <section id="gameScreen" class="hidden">
+
+
+            <div class="top-bar">
+
+                <div>
+                    Team:
+                    <strong id="myTeam"></strong>
+                </div>
+
+                <div>
+                    🏹 Ramudu & Seetha
+                </div>
+
+            </div>
+
+
+
+            <!-- RAMUDU PUBLIC -->
+
+            <div class="ramudu-info">
+
+                <h2>👑 Ramudu</h2>
+
+                <p id="ramuduPublic">
+                    Waiting for Ramudu...
+                </p>
+
+            </div>
+
+
+
+            <!-- MY CARD -->
+
+            <div class="box">
+
+                <h2>Your Team Card</h2>
+
+
+                <div id="card" class="role-card">
+
+                    <div class="card-back">
+
+                        🎴
+
+                        <span>
+                            Your Card
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <button id="openCardBtn">
+                    🔓 Open Card
+                </button>
+
+
+                <button id="hideCardBtn" class="secondary hidden">
+                    🔒 Hide Card
+                </button>
+
+
+                <p id="cardMessage"></p>
+
+            </div>
+
+
+
+            <!-- RAMUDU SECTION -->
+
+            <div id="ramuduSection" class="box hidden">
+
+                <h2>
+                    👑 You are Ramudu!
+                </h2>
+
+
+                <p>
+                    Select the team you think has Seetha.
+                </p>
+
+
+                <div id="seethaChoices"></div>
+
+
+                <p id="guessResult"></p>
+
+            </div>
+
+
+
+            <!-- RESULT -->
+
+            <div id="resultSection" class="box hidden">
+
+                <h2>
+                    🎉 Result
+                </h2>
+
+
+                <p id="resultText"></p>
+
+            </div>
+
+        </section>
+
+    </div>
+
+
+    <script type="module" src="script.js">
+    </script>
+
+</body>
+
+</html>

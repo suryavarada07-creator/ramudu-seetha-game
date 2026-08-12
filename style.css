@@ -1,0 +1,213 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #fff3e0, #e3f2fd);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.container {
+    width: 100%;
+    max-width: 600px;
+    text-align: center;
+}
+
+h1 {
+    font-size: 32px;
+    margin-bottom: 8px;
+}
+
+.subtitle {
+    color: #666;
+    margin-bottom: 25px;
+}
+
+.box {
+    background: white;
+    padding: 25px;
+    border-radius: 18px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+    margin-bottom: 20px;
+}
+
+.box h2 {
+    margin-bottom: 18px;
+}
+
+.box p {
+    margin-bottom: 15px;
+    color: #555;
+}
+
+input,
+select {
+    width: 100%;
+    padding: 13px;
+    margin: 8px 0;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    font-size: 16px;
+}
+
+button {
+    width: 100%;
+    padding: 13px;
+    margin-top: 12px;
+    border: none;
+    border-radius: 10px;
+    background: #ff9800;
+    color: white;
+    font-size: 17px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+button:hover {
+    opacity: 0.9;
+}
+
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.secondary {
+    background: #607d8b;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* GAME TOP BAR */
+
+.top-bar {
+    background: white;
+    padding: 15px;
+    border-radius: 12px;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* RAMUDU PUBLIC */
+
+.ramudu-info {
+    background: #fff8e1;
+    border: 2px solid #ffc107;
+    padding: 18px;
+    border-radius: 15px;
+    margin-bottom: 20px;
+}
+
+.ramudu-info h2 {
+    margin-bottom: 8px;
+}
+
+#ramuduPublic {
+    font-size: 18px;
+    font-weight: bold;
+    color: #795548;
+}
+
+/* CARD */
+
+.role-card {
+    width: 230px;
+    height: 300px;
+    margin: 20px auto;
+    border-radius: 18px;
+    background: #263238;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 25px;
+    font-weight: bold;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+}
+
+.card-back {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    font-size: 50px;
+}
+
+.card-back span {
+    font-size: 18px;
+}
+
+.role-card.opened {
+    background: linear-gradient(135deg, #ffcc80, #ffe082);
+    color: #3e2723;
+}
+
+/* RAMUDU CHOICES */
+
+#seethaChoices {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.choice-button {
+    background: #673ab7;
+    margin-top: 5px;
+}
+
+.choice-button:hover {
+    background: #512da8;
+}
+
+#guessResult {
+    font-size: 20px;
+    font-weight: bold;
+    margin-top: 15px;
+}
+
+/* RESULT */
+
+#resultSection {
+    border: 2px solid #4caf50;
+}
+
+#resultText {
+    font-size: 18px;
+    line-height: 1.6;
+}
+
+/* MOBILE */
+
+@media (max-width: 500px) {
+
+    body {
+        padding: 12px;
+    }
+
+    h1 {
+        font-size: 27px;
+    }
+
+    .box {
+        padding: 18px;
+    }
+
+    .top-bar {
+        font-size: 14px;
+    }
+
+    .role-card {
+        width: 200px;
+        height: 270px;
+    }
+}
