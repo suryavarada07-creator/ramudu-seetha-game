@@ -17,8 +17,7 @@ import {
     get,
     set,
     onValue,
-    runTransaction,
-    remove
+    runTransaction
 } from
     "https://www.gstatic.com/firebasejs/12.16.0/firebase-database.js";
 
@@ -64,7 +63,7 @@ const db = getDatabase(app);
 
 
 // =====================================================
-// TEAMS
+// GAME DATA
 // =====================================================
 
 const teams = [
@@ -75,10 +74,6 @@ const teams = [
     "Jal"
 ];
 
-
-// =====================================================
-// TEAM CODES
-// =====================================================
 
 const teamCodes = {
 
@@ -94,10 +89,6 @@ const teamCodes = {
 };
 
 
-// =====================================================
-// ROLES
-// =====================================================
-
 const roles = [
     "Ramudu",
     "Seetha",
@@ -106,10 +97,6 @@ const roles = [
     "Sugriva"
 ];
 
-
-// =====================================================
-// ROLE EMOJIS
-// =====================================================
 
 const roleEmoji = {
 
@@ -132,6 +119,8 @@ const roleEmoji = {
 let currentUser = null;
 
 let selectedTeam = null;
+
+let gameListenerStarted = false;
 
 
 // =====================================================
@@ -191,213 +180,10 @@ const resultText =
 
 
 // =====================================================
-// FIREBASE LOGIN
+// CREATE NEW GAME DATA
 // =====================================================
 
-async function loginUser() {
-
-    try {
-
-        loginMessage.textContent =
-            "Connecting to Firebase...";
-
-        const result =
-            await signInAnonymously(auth);
-
-        currentUser =
-            result.user;
-
-        console.log(
-            "Firebase login successful:",
-            currentUser.uid
-        );
-
-        loginMessage.textContent =
-            "Firebase connected ✅";
-
-        enterBtn.disabled = false;
-
-    } catch (error) {
-
-        console.error(
-            "Firebase login failed:",
-            error
-        );
-
-        loginMessage.textContent =
-            "Firebase connection failed ❌";
-
-        alert(
-            "Firebase connection failed:\n\n" +
-            error.message
-        );
-    }
-}
-
-
-// =====================================================
-// ENTER GAME
-// =====================================================
-
-async function enterGame() {
-
-    const team =
-        teamSelect.value;
-
-    const code =
-        roomCodeInput.value
-            .trim()
-            .toUpperCase();
-
-
-    // -----------------------------
-    // CHECK TEAM
-    // -----------------------------
-
-    if (!team) {
-
-        alert(
-            "Please select your team."
-        );
-
-        return;
-    }
-
-
-    // -----------------------------
-    // CHECK CODE
-    // -----------------------------
-
-    if (!code) {
-
-        alert(
-            "Please enter your team code."
-        );
-
-        return;
-    }
-
-
-    // -----------------------------
-    // CHECK TEAM CODE
-    // -----------------------------
-
-    if (
-        code !==
-        teamCodes[team]
-    ) {
-
-        alert(
-            "Wrong team code!"
-        );
-
-        return;
-    }
-
-
-    // -----------------------------
-    // CHECK FIREBASE
-    // -----------------------------
-
-    if (!currentUser) {
-
-        alert(
-            "Firebase is still connecting. Please wait."
-        );
-
-        return;
-    }
-
-
-    enterBtn.disabled = true;
-
-    loginMessage.textContent =
-        "Entering game...";
-
-
-    try {
-
-        selectedTeam =
-            team;
-
-
-        await createGameIfNeeded();
-
-
-        homeScreen.classList.add(
-            "hidden"
-        );
-
-        gameScreen.classList.remove(
-            "hidden"
-        );
-
-
-        myTeam.textContent =
-            selectedTeam;
-
-
-        listenToGame();
-
-
-    } catch (error) {
-
-        console.error(
-            "ENTER GAME ERROR:",
-            error
-        );
-
-        alert(
-            "Could not enter game:\n\n" +
-            error.message
-        );
-
-        enterBtn.disabled = false;
-    }
-}
-
-
-// =====================================================
-// CREATE GAME
-// =====================================================
-
-async function createGameIfNeeded() {
-
-    const gameRef =
-        ref(
-            db,
-            "fixedGame"
-        );
-
-
-    const snapshot =
-        await get(gameRef);
-
-
-    // -----------------------------------------
-    // IF GAME ALREADY EXISTS, USE IT
-    // -----------------------------------------
-
-    if (snapshot.exists()) {
-
-        console.log(
-            "Game already exists."
-        );
-
-        return;
-    }
-
-
-    // -----------------------------------------
-    // CREATE NEW GAME
-    // -----------------------------------------
-
-    console.log(
-        "Creating new game..."
-    );
-
-
-    // SHUFFLE ROLES
+function makeFreshGame() {
 
     const shuffledRoles =
         [...roles].sort(
@@ -423,41 +209,266 @@ async function createGameIfNeeded() {
     );
 
 
-    // -----------------------------------------
-    // IMPORTANT:
-    // GUESS IS FALSE AT START
-    // -----------------------------------------
+    return {
 
-    await set(
-        gameRef,
-        {
+        roundId:
+            Date.now().toString() +
+            "-" +
+            Math.random()
+                .toString(36)
+                .substring(2, 8),
 
-            teams:
-                teamData,
+        teams:
+            teamData,
 
-            guessMade:
-                false,
+        guessMade:
+            false,
 
-            guessedTeam:
-                "",
+        guessedTeam:
+            "",
 
-            guessCorrect:
-                false
-        }
-    );
+        guessCorrect:
+            false,
 
-
-    console.log(
-        "New game created successfully."
-    );
+        gameFinished:
+            false
+    };
 }
 
 
 // =====================================================
-// START NEW GAME
+// FIREBASE LOGIN
+// =====================================================
+
+async function loginUser() {
+
+    try {
+
+        loginMessage.textContent =
+            "Connecting to Firebase...";
+
+
+        const result =
+            await signInAnonymously(auth);
+
+
+        currentUser =
+            result.user;
+
+
+        console.log(
+            "Firebase login successful:",
+            currentUser.uid
+        );
+
+
+        loginMessage.textContent =
+            "Firebase connected ✅";
+
+
+        enterBtn.disabled = false;
+
+    } catch (error) {
+
+        console.error(
+            "Firebase login failed:",
+            error
+        );
+
+
+        loginMessage.textContent =
+            "Firebase connection failed ❌";
+
+
+        alert(
+            "Firebase connection failed:\n\n" +
+            error.message
+        );
+    }
+}
+
+
+// =====================================================
+// ENTER GAME
+// =====================================================
+
+async function enterGame() {
+
+    const team =
+        teamSelect.value;
+
+
+    const code =
+        roomCodeInput.value
+            .trim()
+            .toUpperCase();
+
+
+    if (!team) {
+
+        alert(
+            "Please select your team."
+        );
+
+        return;
+    }
+
+
+    if (!code) {
+
+        alert(
+            "Please enter your team code."
+        );
+
+        return;
+    }
+
+
+    if (
+        code !==
+        teamCodes[team]
+    ) {
+
+        alert(
+            "Wrong team code!"
+        );
+
+        return;
+    }
+
+
+    if (!currentUser) {
+
+        alert(
+            "Firebase is still connecting. Please wait."
+        );
+
+        return;
+    }
+
+
+    enterBtn.disabled = true;
+
+
+    try {
+
+        selectedTeam =
+            team;
+
+
+        await createGameIfNeeded();
+
+
+        homeScreen.classList.add(
+            "hidden"
+        );
+
+
+        gameScreen.classList.remove(
+            "hidden"
+        );
+
+
+        myTeam.textContent =
+            selectedTeam;
+
+
+        listenToGame();
+
+    } catch (error) {
+
+        console.error(
+            "ENTER GAME ERROR:",
+            error
+        );
+
+
+        alert(
+            "Could not enter game:\n\n" +
+            error.message
+        );
+
+
+        enterBtn.disabled = false;
+    }
+}
+
+
+// =====================================================
+// CREATE GAME IF NONE EXISTS
+// =====================================================
+
+async function createGameIfNeeded() {
+
+    const gameRef = ref(db, "fixedGame");
+
+    const snapshot = await get(gameRef);
+
+    // -----------------------------------------
+    // IF NO GAME EXISTS → CREATE NEW GAME
+    // -----------------------------------------
+
+    if (!snapshot.exists()) {
+
+        console.log("No game found. Creating new game...");
+
+        await set(
+            gameRef,
+            makeFreshGame()
+        );
+
+        console.log("Fresh game created.");
+
+        return;
+    }
+
+    const game = snapshot.val();
+
+    // -----------------------------------------
+    // IF OLD GAME IS ALREADY FINISHED
+    // → CREATE A COMPLETELY NEW GAME
+    // -----------------------------------------
+
+    if (game.gameFinished === true) {
+
+        console.log(
+            "Old game finished. Creating fresh game..."
+        );
+
+        await set(
+            gameRef,
+            makeFreshGame()
+        );
+
+        console.log(
+            "Fresh game created successfully."
+        );
+
+        return;
+    }
+
+    // -----------------------------------------
+    // GAME IS STILL ACTIVE
+    // → KEEP IT
+    // -----------------------------------------
+
+    console.log(
+        "Active game already exists."
+    );
+}
+
+// =====================================================
+// START COMPLETELY NEW GAME
+// ONLY RAMUDU CAN DO THIS
 // =====================================================
 
 async function startNewGame() {
+
+    if (!selectedTeam) {
+
+        return;
+    }
+
 
     const gameRef =
         ref(
@@ -465,23 +476,76 @@ async function startNewGame() {
             "fixedGame"
         );
 
+
     try {
 
-        // Delete previous game
-        await remove(gameRef);
+        const result =
+            await runTransaction(
+                gameRef,
+                game => {
 
-        console.log(
-            "Old game deleted."
-        );
+                    if (!game) {
+
+                        return;
+                    }
 
 
-        // Create fresh game
-        await createGameIfNeeded();
+                    // ---------------------------------
+                    // ONLY RAMUDU CAN START NEW GAME
+                    // ---------------------------------
+
+                    if (
+                        !game.teams ||
+                        !game.teams[selectedTeam] ||
+                        game.teams[selectedTeam].role !==
+                        "Ramudu"
+                    ) {
+
+                        console.log(
+                            "Only Ramudu can start a new game."
+                        );
+
+                        return;
+                    }
 
 
-        alert(
-            "New game started successfully! 🎮"
-        );
+                    // ---------------------------------
+                    // OLD GAME MUST BE FINISHED
+                    // ---------------------------------
+
+                    if (
+                        game.gameFinished !== true
+                    ) {
+
+                        console.log(
+                            "Current game is not finished."
+                        );
+
+                        return;
+                    }
+
+
+                    // ---------------------------------
+                    // CREATE FRESH GAME
+                    // ---------------------------------
+
+                    return makeFreshGame();
+                }
+            );
+
+
+        if (result.committed) {
+
+            alert(
+                "New game started successfully! 🎮"
+            );
+
+        } else {
+
+            alert(
+                "New game could not be started."
+            );
+        }
 
     } catch (error) {
 
@@ -489,6 +553,7 @@ async function startNewGame() {
             "NEW GAME ERROR:",
             error
         );
+
 
         alert(
             "Could not start new game:\n\n" +
@@ -503,6 +568,15 @@ async function startNewGame() {
 // =====================================================
 
 function listenToGame() {
+
+    if (gameListenerStarted) {
+
+        return;
+    }
+
+
+    gameListenerStarted = true;
+
 
     const gameRef =
         ref(
@@ -525,6 +599,14 @@ function listenToGame() {
 
             const game =
                 snapshot.val();
+
+
+            if (
+                !game.teams
+            ) {
+
+                return;
+            }
 
 
             updateMyCard(game);
@@ -561,10 +643,6 @@ function updateMyCard(game) {
     }
 
 
-    // -----------------------------------------
-    // CARD OPEN
-    // -----------------------------------------
-
     if (
         teamData.cardOpen === true
     ) {
@@ -595,6 +673,7 @@ function updateMyCard(game) {
             "hidden"
         );
 
+
         hideCardBtn.classList.remove(
             "hidden"
         );
@@ -603,14 +682,7 @@ function updateMyCard(game) {
         cardMessage.textContent =
             "Your card is visible.";
 
-    }
-
-
-    // -----------------------------------------
-    // CARD CLOSED
-    // -----------------------------------------
-
-    else {
+    } else {
 
         card.classList.remove(
             "opened"
@@ -635,6 +707,7 @@ function updateMyCard(game) {
         openCardBtn.classList.remove(
             "hidden"
         );
+
 
         hideCardBtn.classList.add(
             "hidden"
@@ -682,7 +755,8 @@ async function openMyCard() {
 
                     ...data,
 
-                    cardOpen: true
+                    cardOpen:
+                        true
                 };
             }
         );
@@ -692,6 +766,7 @@ async function openMyCard() {
         console.error(
             error
         );
+
 
         alert(
             "Could not open card."
@@ -735,7 +810,8 @@ async function hideMyCard() {
 
                     ...data,
 
-                    cardOpen: false
+                    cardOpen:
+                        false
                 };
             }
         );
@@ -745,6 +821,7 @@ async function hideMyCard() {
         console.error(
             error
         );
+
 
         alert(
             "Could not hide card."
@@ -824,11 +901,12 @@ function updateRamuduControls(game) {
 
 
     // -----------------------------------------
-    // ONLY RAMUDU CAN SEE THIS SECTION
+    // ONLY RAMUDU
     // -----------------------------------------
 
     if (
-        myData.role !== "Ramudu"
+        myData.role !==
+        "Ramudu"
     ) {
 
         ramuduSection.classList.add(
@@ -845,7 +923,75 @@ function updateRamuduControls(game) {
 
 
     // -----------------------------------------
-    // IF RAMUDU ALREADY SELECTED
+    // GAME FINISHED
+    // -----------------------------------------
+
+    if (
+        game.gameFinished === true
+    ) {
+
+        seethaChoices.innerHTML = "";
+
+
+        const finishedMessage =
+            document.createElement(
+                "p"
+            );
+
+
+        finishedMessage.textContent =
+            "🎮 This round is finished.";
+
+
+        seethaChoices.appendChild(
+            finishedMessage
+        );
+
+
+        // -------------------------------------
+        // NEW GAME BUTTON
+        // -------------------------------------
+
+        let newGameButton =
+            document.getElementById(
+                "newGameButton"
+            );
+
+
+        if (!newGameButton) {
+
+            newGameButton =
+                document.createElement(
+                    "button"
+                );
+
+
+            newGameButton.id =
+                "newGameButton";
+
+
+            newGameButton.textContent =
+                "🎮 Start New Game";
+
+
+            newGameButton.addEventListener(
+                "click",
+                startNewGame
+            );
+
+
+            seethaChoices.appendChild(
+                newGameButton
+            );
+        }
+
+
+        return;
+    }
+
+
+    // -----------------------------------------
+    // GUESS ALREADY MADE
     // -----------------------------------------
 
     if (
@@ -868,8 +1014,6 @@ function updateRamuduControls(game) {
 
     teams.forEach(
         team => {
-
-            // RAMUDU CANNOT SELECT HIMSELF
 
             if (
                 team === selectedTeam
@@ -894,7 +1038,6 @@ function updateRamuduControls(game) {
                 () => {
 
                     selectSeetha(team);
-
                 }
             );
 
@@ -935,10 +1078,6 @@ async function selectSeetha(
                 gameRef,
                 game => {
 
-                    // ---------------------------------
-                    // GAME MUST EXIST
-                    // ---------------------------------
-
                     if (!game) {
 
                         return;
@@ -946,7 +1085,19 @@ async function selectSeetha(
 
 
                     // ---------------------------------
-                    // PREVENT SECOND GUESS
+                    // GAME MUST NOT BE FINISHED
+                    // ---------------------------------
+
+                    if (
+                        game.gameFinished === true
+                    ) {
+
+                        return;
+                    }
+
+
+                    // ---------------------------------
+                    // ONLY ONE GUESS
                     // ---------------------------------
 
                     if (
@@ -958,7 +1109,7 @@ async function selectSeetha(
 
 
                     // ---------------------------------
-                    // CHECK CURRENT PLAYER IS RAMUDU
+                    // CHECK RAMUDU
                     // ---------------------------------
 
                     if (
@@ -1000,6 +1151,12 @@ async function selectSeetha(
                     );
 
 
+                    if (!actualSeetha) {
+
+                        return;
+                    }
+
+
                     // ---------------------------------
                     // CHECK ANSWER
                     // ---------------------------------
@@ -1024,7 +1181,10 @@ async function selectSeetha(
                             selectedTeamName,
 
                         guessCorrect:
-                            correct
+                            correct,
+
+                        gameFinished:
+                            true
                     };
                 }
             );
@@ -1035,7 +1195,7 @@ async function selectSeetha(
         ) {
 
             console.log(
-                "Seetha selected by Ramudu."
+                "Seetha selection saved."
             );
 
         } else {
@@ -1052,6 +1212,7 @@ async function selectSeetha(
             error
         );
 
+
         alert(
             "Could not select Seetha."
         );
@@ -1066,8 +1227,7 @@ async function selectSeetha(
 function updateResult(game) {
 
     // -----------------------------------------
-    // VERY IMPORTANT:
-    // NO RESULT UNTIL RAMUDU MAKES A GUESS
+    // NO RESULT BEFORE GUESS
     // -----------------------------------------
 
     if (
@@ -1078,13 +1238,22 @@ function updateResult(game) {
             "hidden"
         );
 
-        guessResult.textContent = "";
 
-        resultText.innerHTML = "";
+        guessResult.textContent =
+            "";
+
+
+        resultText.innerHTML =
+            "";
+
 
         return;
     }
 
+
+    // -----------------------------------------
+    // SHOW RESULT
+    // -----------------------------------------
 
     resultSection.classList.remove(
         "hidden"
@@ -1135,14 +1304,12 @@ function updateResult(game) {
 
         guessResult.textContent =
             "✅ Right!";
-    }
 
+    } else {
 
-    // -----------------------------------------
-    // WRONG
-    // -----------------------------------------
-
-    else {
+        // -----------------------------------------
+        // WRONG
+        // -----------------------------------------
 
         resultText.innerHTML = `
 
@@ -1179,10 +1346,12 @@ enterBtn.addEventListener(
     enterGame
 );
 
+
 openCardBtn.addEventListener(
     "click",
     openMyCard
 );
+
 
 hideCardBtn.addEventListener(
     "click",
